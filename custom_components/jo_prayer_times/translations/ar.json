@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "مواقيت الصلاة - الأردن",
+        "data": { "city": "المدينة" }
+      }
+    },
+    "abort": { "already_configured": "هذه المدينة مضافة مسبقاً" }
+  },
+  "entity": {
+    "sensor": {
+      "fajr": { "name": "الفجر" },
+      "sunrise": { "name": "الشروق" },
+      "dhuhr": { "name": "الظهر" },
+      "asr": { "name": "العصر" },
+      "maghrib": { "name": "المغرب" },
+      "isha": { "name": "العشاء" },
+      "next_prayer": { "name": "الصلاة القادمة" }
+    }
+  }
+}
