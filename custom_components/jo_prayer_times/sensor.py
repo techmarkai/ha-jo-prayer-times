@@ -42,6 +42,7 @@ class PrayerSensor(SensorEntity):
 class NextPrayerSensor(PrayerSensor):
     def __init__(self, entry):
         super().__init__(entry, "next_prayer")
+        self._city = entry.title.split(" / ")[-1].split("،")[0]
 
     async def async_update(self):
         now = datetime.now(TZ)
@@ -50,6 +51,6 @@ class NextPrayerSensor(PrayerSensor):
             for name, at in zip(PRAYERS, times or []):
                 if name != "sunrise" and at > now:
                     self._attr_native_value = at
-                    self._attr_extra_state_attributes = {"prayer": name, "data_year": year, "fallback": year != day.year}
+                    self._attr_extra_state_attributes = {"prayer": name, "city": self._city, "data_year": year, "fallback": year != day.year}
                     return
         self._attr_native_value = None

@@ -1,10 +1,14 @@
 """Jordan prayer times from the Ministry of Awqaf, bundled for offline use and refreshed from GitHub."""
 import logging
 from datetime import timedelta
+from pathlib import Path
 
 import aiohttp
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
@@ -13,6 +17,18 @@ from .times import DATA_DIR, DOMAIN, read_json
 
 _LOGGER = logging.getLogger(__name__)
 RAW = "https://raw.githubusercontent.com/techmarkai/ha-jo-prayer-times/main/custom_components/jo_prayer_times/data/{}.json"
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+CARD_URL = f"/{DOMAIN}"
+
+
+async def async_setup(hass: HomeAssistant, config) -> bool:
+    """Serve the Lovelace card so it works without installing anything else."""
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(CARD_URL, str(Path(__file__).parent / "www"), False)]
+    )
+    add_extra_js_url(hass, f"{CARD_URL}/jo-prayer-card.js")
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

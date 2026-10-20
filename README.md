@@ -23,6 +23,19 @@ Manual: copy `custom_components/jo_prayer_times` into your `config/custom_compon
 
 Timestamp sensors: Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha, and Next prayer (attribute `prayer`).
 
+## Lovelace card
+
+![card](docs/card.png)
+
+Comes with the integration and loads automatically — no extra resource to add. Animated Islamic
+ornament in the background (vector, sharp up to 4K; motion is turned off for users with *reduce motion* set).
+
+```yaml
+type: custom:jo-prayer-card
+# entity: sensor.amman_next_prayer   # optional, auto-detected
+# city: عمّان                         # optional label override
+```
+
 ## Cities
 
 Amman/Balqa/Zarqa/Madaba, Irbid, Karak, Tafilah, Ma'an, Aqaba, Northern Jordan Valley, Jerash & Ajloun,
