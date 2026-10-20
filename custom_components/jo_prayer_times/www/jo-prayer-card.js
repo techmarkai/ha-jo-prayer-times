@@ -32,6 +32,10 @@ class JoPrayerCard extends HTMLElement {
     this._tick();
   }
 
+  static getConfigElement() {
+    return document.createElement("jo-prayer-card-editor");
+  }
+
   static getStubConfig(hass) {
     const e = Object.keys(hass.states).find((id) => id.startsWith("sensor.") && hass.states[id].attributes.prayer);
     return e ? { entity: e } : {};
@@ -139,6 +143,43 @@ class JoPrayerCard extends HTMLElement {
   }
 }
 
+// Visual editor shown after picking the card: choose the city's sensor and an optional label.
+class JoPrayerCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = config;
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  _render() {
+    if (!this._hass || !this._config) return;
+    if (!this._form) {
+      this._form = document.createElement("ha-form");
+      this._form.schema = [
+        { name: "entity", selector: { entity: { filter: { integration: "jo_prayer_times", domain: "sensor" } } } },
+        { name: "city", selector: { text: {} } },
+      ];
+      this._form.computeLabel = (s) => (s.name === "entity" ? "Next prayer sensor (اختر المدينة)" : "City label (optional)");
+      this._form.addEventListener("value-changed", (e) =>
+        this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: e.detail.value }, bubbles: true, composed: true })));
+      this.appendChild(this._form);
+    }
+    this._form.hass = this._hass;
+    this._form.data = this._config;
+  }
+}
+
 customElements.define("jo-prayer-card", JoPrayerCard);
+customElements.define("jo-prayer-card-editor", JoPrayerCardEditor);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: "jo-prayer-card", name: "Jordan Prayer Card", description: "Countdown to the next prayer (Awqaf times)" });
+window.customCards.push({
+  type: "jo-prayer-card",
+  name: "Jordan Prayer Card",
+  description: "Countdown to the next prayer (official Awqaf times)",
+  preview: true,
+  documentationURL: "https://github.com/techmarkai/ha-jo-prayer-times",
+});
