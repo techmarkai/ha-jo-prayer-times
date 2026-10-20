@@ -12,6 +12,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
+from homeassistant.loader import async_get_integration
 
 from .times import DATA_DIR, DOMAIN, read_json
 
@@ -27,7 +28,9 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     await hass.http.async_register_static_paths(
         [StaticPathConfig(CARD_URL, str(Path(__file__).parent / "www"), False)]
     )
-    add_extra_js_url(hass, f"{CARD_URL}/jo-prayer-card.js")
+    # Version in the URL so browsers fetch the new card after each update instead of a cached copy.
+    version = (await async_get_integration(hass, DOMAIN)).version
+    add_extra_js_url(hass, f"{CARD_URL}/jo-prayer-card.js?v={version}")
     return True
 
 
