@@ -1,26 +1,40 @@
 name: Update prayer times
 
+# On 1 January the site lists the whole year (today -> 31 Dec), so that run grabs it all.
+# Daily January runs retry in case the ministry publishes late; the monthly run picks up
+# corrections and keeps the schedule alive (GitHub disables it after 60 idle days).
 on:
   schedule:
-    - cron: "0 1 * * *" # 04:00 Amman
+    - cron: "0 1 * 1 *" # every day in January, 04:00 Amman
+    - cron: "0 1 1 * *" # 1st of every month
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: gh workflow enable update.yml
       - run: python scraper/scrape.py
       - run: python tests/test_logic.py
-      - name: Commit new data
+      - name: Release new data (shows as an update in Home Assistant via HACS)
         run: |
+          git add custom_components/jo_prayer_times/data
+          git diff --cached --quiet && exit 0
+          V=$(date -u +%Y.%-m.%-d)
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$V\"/" custom_components/jo_prayer_times/manifest.json
+          git add custom_components/jo_prayer_times/manifest.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add custom_components/jo_prayer_times/data
-          git diff --cached --quiet || git commit -m "Update prayer times $(date -u +%F)" && git push
+          git commit -m "Update prayer times $V"
+          git push
+          gh release create "v$V" --title "Prayer times $V" --notes "Official times updated from awqaf.gov.jo."
