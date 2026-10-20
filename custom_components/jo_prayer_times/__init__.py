@@ -30,7 +30,9 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     )
     # Version in the URL so browsers fetch the new card after each update instead of a cached copy.
     version = (await async_get_integration(hass, DOMAIN)).version
-    add_extra_js_url(hass, f"{CARD_URL}/jo-prayer-card.js?v={version}")
+    url = f"{CARD_URL}/jo-prayer-card.js?v={version}"
+    add_extra_js_url(hass, url)
+    add_extra_js_url(hass, url, es5=True)  # older browsers/tablets get HA's legacy build
     return True
 
 

@@ -1,6 +1,7 @@
 // Jordan prayer times card. Served by the jo_prayer_times integration, no install needed.
 // type: custom:jo-prayer-card   (entity: sensor.xxx_next_prayer is optional, auto-detected)
-const BASE = new URL(".", import.meta.url).href;
+// Plain script, not a module: the legacy (es5) frontend loads it with a classic <script>.
+const BASE = "/jo_prayer_times/";
 const NAMES = { fajr: "الفجر", sunrise: "الشروق", dhuhr: "الظهر", asr: "العصر", maghrib: "المغرب", isha: "العشاء" };
 const TZ = "Asia/Amman";
 
@@ -28,8 +29,17 @@ class JoPrayerCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    if (!this.shadowRoot) this._build();
+    if (!this.shadowRoot) {
+      this._build();
+      if (window.ResizeObserver) new ResizeObserver(() => this._size()).observe(this);
+    }
     this._tick();
+  }
+
+  // --u = 1% of card width; stands in for cqw, which older browsers lack.
+  _size() {
+    const w = this.shadowRoot.querySelector(".wrap");
+    w.style.setProperty("--u", w.offsetWidth / 100 + "px");
   }
 
   static getConfigElement() {
@@ -61,14 +71,15 @@ class JoPrayerCard extends HTMLElement {
 <style>
   :host { display: block; }
   ha-card { background: none; border: none; box-shadow: none; overflow: visible; cursor: pointer; }
-  .wrap { position: relative; aspect-ratio: 1536 / 679; container-type: inline-size; direction: rtl;
+  .wrap { position: relative; direction: rtl;
           font-family: "Noto Kufi Arabic", "Segoe UI", Tahoma, sans-serif; color: #fff; }
-  .panel { position: absolute; inset: 16.5% 0 0 0; border-radius: 4cqw; overflow: hidden;
+  .wrap::before { content: ""; display: block; padding-top: 44.206%; } /* 1536:679, aspect-ratio for old browsers */
+  .panel { position: absolute; top: 16.5%; right: 0; bottom: 0; left: 0; border-radius: 4cqw; overflow: hidden;
            background: linear-gradient(180deg, #0b1c38 0%, #1d3d6e 45%, #3b6aa6 100%);
            box-shadow: 0 1.2cqw 3cqw rgba(5, 15, 35, .35); }
-  .glow { position: absolute; inset: -40%; background: radial-gradient(circle at 30% 60%, rgba(120,190,255,.22), transparent 45%);
+  .glow { position: absolute; top: -40%; right: -40%; bottom: -40%; left: -40%; background: radial-gradient(circle at 30% 60%, rgba(120,190,255,.22), transparent 45%);
           animation: drift 18s ease-in-out infinite alternate; }
-  .sweep { position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.07) 50%, transparent 65%);
+  .sweep { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.07) 50%, transparent 65%);
            background-size: 250% 100%; animation: sweep 9s linear infinite; }
   .rosette { position: absolute; color: rgba(255,255,255,.09); }
   .rosette svg { width: 100%; height: 100%; display: block; }
@@ -111,7 +122,7 @@ class JoPrayerCard extends HTMLElement {
       <div class="meta"></div>
     </div>
   </div>
-</ha-card>`;
+</ha-card>`.replace(/(-?[\d.]+)cqw/g, "calc($1 * var(--u))");
     this.shadowRoot.querySelector("ha-card").addEventListener("click", () => {
       const ev = new Event("hass-more-info", { bubbles: true, composed: true });
       ev.detail = { entityId: this._entity() };
@@ -125,6 +136,7 @@ class JoPrayerCard extends HTMLElement {
 
   _tick() {
     const root = this.shadowRoot;
+    if (root) this._size();
     const st = this._hass && this._hass.states[this._entity()];
     if (!root || !st) return;
     const $ = (c) => root.querySelector(c);
